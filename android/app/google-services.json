@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "557613025988",
+    "project_id": "watergoone-208fd",
+    "storage_bucket": "watergoone-208fd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:557613025988:android:a0cfba72bc944fdc68d791",
+        "android_client_info": {
+          "package_name": "uz.codestart.water.go.one.water_go"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkzfzb8fZPM5NpyFiip_ziBKcfwTZe9fo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
