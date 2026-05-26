@@ -79,6 +79,9 @@ class MyApp extends StatelessWidget {
       title: 'WaterGo',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        appBarTheme: AppBarTheme(
+          iconTheme: IconThemeData(color: Colors.white),
+        ),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: const ConnectivityWrapper(

@@ -7,12 +7,14 @@ import 'package:water_go/models/order_model.dart';
 import 'package:water_go/screen/auth/login_screen.dart';
 import 'package:water_go/screen/currer/history/history_screen.dart';
 import 'package:water_go/screen/currer/ombor/ombor_screen.dart';
+import 'package:water_go/screen/currer/order/home_show.dart';
 import 'package:water_go/screen/currer/order/orders_screen.dart';
 import 'package:water_go/screen/currer/profile/password_update_screen.dart';
 import 'package:water_go/screen/currer/profile/payment_screen.dart';
 import 'package:water_go/screen/currer/profile/profile_screen.dart';
 import 'package:water_go/service/auth_service.dart';
 import 'package:water_go/service/currer_service.dart';
+import 'package:water_go/service/snack_service.dart';
 
 class CurrerMainScreen extends StatefulWidget {
   const CurrerMainScreen({super.key});
@@ -107,14 +109,23 @@ class _CurrerMainScreenState extends State<CurrerMainScreen>
     try {
       await _service.acceptOrder(order.id);
       _fetchOrders();
-      _showSnack(
+      SnackService.showSnack(
+        context: context,
         message: "Buyurtma #${order.id} qabul qilindi",
         isSuccess: true,
       );
     } on ApiException catch (e) {
-      _showSnack(message: e.message, isSuccess: false);
+      SnackService.showSnack(
+        context: context,
+        message: e.message,
+        isSuccess: false,
+      );
     } catch (_) {
-      _showSnack(message: "Xatolik yuz berdi", isSuccess: false);
+      SnackService.showSnack(
+        context: context,
+        message: "Xatolik yuz berdi",
+        isSuccess: false,
+      );
     }
   }
 
@@ -125,30 +136,6 @@ class _CurrerMainScreenState extends State<CurrerMainScreen>
           builder: (_) => _AcceptOrderDialog(order: order),
         ) ??
         false;
-  }
-
-  void _showSnack({required String message, required bool isSuccess}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              isSuccess ? Icons.check_circle_rounded : Icons.error_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
-        ),
-        backgroundColor: isSuccess
-            ? const Color(0xFF16A34A)
-            : const Color(0xFFDC2626),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
   }
 
   Future<void> _showLogoutDialog() async {
@@ -480,10 +467,18 @@ class _CurrerMainScreenState extends State<CurrerMainScreen>
         itemCount: _orders.length,
         itemBuilder: (context, index) {
           final order = _orders[index];
+          print(order.id);
           return _OrderCard(
             order: order,
             index: index,
-            onDetail: () => Get.to(() => OrdersScreen()),
+            onDetail: () async {
+              final bool? isRefreshed = await Get.to(
+                () => HomeShow(id: order.id),
+              );
+              if (isRefreshed == true) {
+                _fetchOrders();
+              }
+            },
             onAccept: () => _acceptOrder(order),
           );
         },
