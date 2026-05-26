@@ -1,26 +1,25 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:water_go/const/api_const.dart';
+import 'package:water_go/models/user_model.dart';
+import 'package:water_go/service/fcm_service.dart';
 
-enum AuthStatus {
-  noToken, // Token yo'q → Login
-  tokenInvalid, // Token aktiv emas → Login
-  currer, // Token aktiv + type = currer → CurrerMainScreen
-  ombor, // Token aktiv + type != currer → OmborMainScreen
-}
-
+enum AuthStatus {noToken,  tokenInvalid,  currer,  ombor,}
 class AuthService {
   final GetStorage _storage = GetStorage();
+  static const String _tokenKey = 'auth_token';
+  static const String _typeKey = 'auth_type';
+  static const String _userKey = 'auth_user';
 
   Future<AuthStatus> checkAuth() async {
-    final token = _storage.read('auth_token');
-    if (token == null || token.toString().isEmpty) {
+    final token = _storage.read<String>(_tokenKey);
+    if (token == null || token.isEmpty) {
       return AuthStatus.noToken;
     }
     try {
-      final response = await http
-          .get(
+      final response = await http.get(
             Uri.parse('${ApiConst.baseUrl}/auth/check'),
             headers: {
               'Content-Type': 'application/json',
@@ -30,22 +29,118 @@ class AuthService {
           ).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final type = _storage.read('type') ?? data['type'] ?? '';
-        if (type == 'currer') {
-          return AuthStatus.currer;
-        } else {
-          return AuthStatus.ombor;
-        }
+        final type = data['type']?.toString() ?? getType() ?? '';
+        _storage.write(_typeKey, type);
+        return type == 'currer' ? AuthStatus.currer : AuthStatus.ombor;
       } else {
-        _storage.remove('auth_token');
-        _storage.remove('type');
+        _clearAll();
         return AuthStatus.tokenInvalid;
       }
-    } catch (e) {
-      final type = _storage.read('type') ?? '';
+    } catch (_) {
+      final type = getType() ?? '';
       if (type == 'currer') return AuthStatus.currer;
       if (type.isNotEmpty) return AuthStatus.ombor;
       return AuthStatus.tokenInvalid;
     }
   }
+
+  Future<LoginResponse> login({required String phone,required String password,}) async {
+    try {
+      print('✅ Token saqlandi: ${_storage.read('fcm_token')}');
+      final response = await http.post(
+            Uri.parse('${ApiConst.baseUrl}/auth/login'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({'phone': phone, 'password': password}),
+          ).timeout(const Duration(seconds: 30));
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final loginResponse = LoginResponse.fromJson(data);
+      if (loginResponse.success && loginResponse.token != null) {
+        _storage.write(_tokenKey, loginResponse.token);
+        _storage.write(_typeKey, loginResponse.type ?? '');
+        if (loginResponse.user != null) {
+          _storage.write(_userKey, jsonEncode(loginResponse.user!.toJson()));
+        }
+        print('✅ Token saqlandi: ${_storage.read(_tokenKey)}');
+        final fcmService = FCMService();
+        await fcmService.sendTokenAfterLogin();
+      }
+      return loginResponse;
+    } on SocketException {
+      throw AuthException('Internet aloqasi mavjud emas');
+    } on HttpException {
+      throw AuthException('Server bilan ulanishda xatolik');
+    } on FormatException {
+      throw AuthException('Serverdan noto\'g\'ri javob keldi');
+    } catch (e) {
+      throw AuthException('Kutilmagan xatolik: $e');
+    }
+  }
+
+  Future<bool> logout() async {
+    try {
+      final token = getToken();
+      if (token != null) {
+        await http.post(
+              Uri.parse('${ApiConst.baseUrl}/auth/logout'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': 'Bearer $token',
+              },
+            ).timeout(const Duration(seconds: 15));
+      }
+    } catch (_) {
+    } finally {
+      _clearAll();
+    }
+    return true;
+  }
+
+  Future<UserModel?> getProfile() async {
+    try {
+      final token = getToken();
+      if (token == null) return null;
+      final response = await http.get(
+            Uri.parse('${ApiConst.baseUrl}/auth/profile'),
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          ).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['user'] != null) {
+          return UserModel.fromJson(data['user']);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String? getToken() => _storage.read<String>(_tokenKey);
+  String? getType() => _storage.read<String>(_typeKey);
+  bool isLoggedIn() => (getToken() ?? '').isNotEmpty;
+  UserModel? getCachedUser() {
+    final userStr = _storage.read<String>(_userKey);
+    if (userStr == null) return null;
+    return UserModel.fromJson(jsonDecode(userStr));
+  }
+
+  void _clearAll() {
+    _storage.remove(_tokenKey);
+    _storage.remove(_typeKey);
+    _storage.remove(_userKey);
+  }
+}
+
+class AuthException implements Exception {
+  final String message;
+  AuthException(this.message);
+  @override
+  String toString() => message;
 }
