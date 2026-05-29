@@ -6,7 +6,7 @@
         </intent>
     </queries>
     <application
-        android:label="water_go"
+        android:label="Water GO"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <service

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:water_go/screen/admin/admin_main_screen.dart';
 import 'package:water_go/screen/auth/login_screen.dart';
 import 'package:water_go/screen/currer/currer_main_screen.dart';
 import 'package:water_go/screen/ombor/ombor_main_screen.dart';
+import 'package:water_go/screen/operator/operator_main_screen.dart';
 import 'package:water_go/service/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -67,6 +69,12 @@ class _SplashScreenState extends State<SplashScreen>
         break;
       case AuthStatus.ombor:
         Get.offAll(()=>OmborMainScreen());
+        break;
+      case AuthStatus.operator:
+        Get.offAll(()=>OperatorMainScreen());
+        break;
+      case AuthStatus.admin:
+        Get.offAll(()=>AdminMainScreen());
         break;
     }
   }

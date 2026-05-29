@@ -6,7 +6,7 @@ import 'package:water_go/const/api_const.dart';
 import 'package:water_go/models/user_model.dart';
 import 'package:water_go/service/fcm_service.dart';
 
-enum AuthStatus {noToken,  tokenInvalid,  currer,  ombor,}
+enum AuthStatus {noToken,  tokenInvalid,  currer,  ombor, operator, admin}
 class AuthService {
   final GetStorage _storage = GetStorage();
   static const String _tokenKey = 'auth_token';
@@ -31,7 +31,11 @@ class AuthService {
         final data = jsonDecode(response.body);
         final type = data['type']?.toString() ?? getType() ?? '';
         _storage.write(_typeKey, type);
-        return type == 'currer' ? AuthStatus.currer : AuthStatus.ombor;
+        return type == 'currer' ?
+          AuthStatus.currer : (type == 'omborchi' ?
+            AuthStatus.ombor: (type == 'operator' ?
+              AuthStatus.operator: (type == 'operator' ?
+                AuthStatus.operator: AuthStatus.admin)));
       } else {
         _clearAll();
         return AuthStatus.tokenInvalid;
@@ -39,7 +43,9 @@ class AuthService {
     } catch (_) {
       final type = getType() ?? '';
       if (type == 'currer') return AuthStatus.currer;
-      if (type.isNotEmpty) return AuthStatus.ombor;
+      if (type == 'omborchi') return AuthStatus.ombor;
+      if (type == 'operator') return AuthStatus.operator;
+      if (type.isNotEmpty) return AuthStatus.admin;
       return AuthStatus.tokenInvalid;
     }
   }
