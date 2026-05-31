@@ -26,7 +26,7 @@ class CurrerBalansHistoryModel {
       count: json['count'],
       description: json['description'],
       status: json['status'],
-      omborchi: json['omborchi'],
+      omborchi: json['omborchi']==null?"":json['omborchi'],
       created_at: json['created_at'],
       updated_at: json['updated_at'],
     );

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:water_go/const/color_const.dart';
 import 'package:water_go/models/currer/currer_balans_detal_model.dart';
 import 'package:water_go/models/currer/currer_balans_history_model.dart';
 import 'package:water_go/models/currer/currer_balans_model.dart';
+import 'package:water_go/screen/currer/kassa/kassa_output_screen.dart';
 import 'package:water_go/screen/currer/widget/shimmer_loading.dart';
 import 'package:water_go/service/currer/currer_kassa_service.dart';
 import 'package:water_go/service/snack_service.dart';
@@ -26,9 +28,7 @@ class _CurrerKassaScreenState extends State<CurrerKassaScreen> {
   @override
   void initState() {
     super.initState();
-    _service = CurrerKassaService(
-      token: _storage.read('auth_token') ?? '',
-    );
+    _service = CurrerKassaService(token: _storage.read('auth_token') ?? '');
     _refreshData();
   }
 
@@ -44,12 +44,20 @@ class _CurrerKassaScreenState extends State<CurrerKassaScreen> {
     try {
       await _service.kirimSuccess(id);
       if (mounted) {
-        SnackService.showSnack(context: context, message: "Muvaffaqiyatli tasdiqlandi", isSuccess: true);
+        SnackService.showSnack(
+          context: context,
+          message: "Muvaffaqiyatli tasdiqlandi",
+          isSuccess: true,
+        );
       }
       _refreshData();
     } catch (e) {
       if (mounted) {
-        SnackService.showSnack(context: context, message: e.toString(), isSuccess: false);
+        SnackService.showSnack(
+          context: context,
+          message: e.toString(),
+          isSuccess: false,
+        );
       }
     } finally {
       if (mounted) {
@@ -63,12 +71,20 @@ class _CurrerKassaScreenState extends State<CurrerKassaScreen> {
     try {
       await _service.chiqimCancel(id);
       if (mounted) {
-        SnackService.showSnack(context: context, message: "Muvaffaqiyatli bekor qilindi", isSuccess: true);
+        SnackService.showSnack(
+          context: context,
+          message: "Muvaffaqiyatli bekor qilindi",
+          isSuccess: true,
+        );
       }
       _refreshData();
     } catch (e) {
       if (mounted) {
-        SnackService.showSnack(context: context, message: e.toString(), isSuccess: false);
+        SnackService.showSnack(
+          context: context,
+          message: e.toString(),
+          isSuccess: false,
+        );
       }
     } finally {
       if (mounted) {
@@ -93,12 +109,15 @@ class _CurrerKassaScreenState extends State<CurrerKassaScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          IconButton(onPressed: _refreshData, icon: const Icon(Icons.refresh)),
+        ],
       ),
       body: FutureBuilder<CurrerBalansDetalModel>(
-        // 3. SHU YERDA: Kalit o'zgargani sababli FutureBuilder yangi ma'lumotni majburlab yuklaydi
         key: ValueKey(_refreshCounter),
         future: _balansFuture,
         builder: (context, snapshot) {
+          print(snapshot);
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const ShimmerLoading();
           } else if (snapshot.hasError) {
@@ -128,6 +147,49 @@ class _CurrerKassaScreenState extends State<CurrerKassaScreen> {
           return Column(
             children: [
               Expanded(flex: 3, child: _buildBalansSection(data.balans)),
+              Container(
+                margin: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: ColorConst.navy,
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: TextButton(
+                  onPressed: () async {
+                    final result = await Get.to<bool>(
+                      () => KassaOutputScreen(
+                        cash: data.balans.cash,
+                        card: data.balans.card,
+                        bank: data.balans.bank,
+                        full_contaner: data.balans.full_contaner,
+                        empty_contaner: data.balans.empty_contaner,
+                      ),
+                    );
+                    if (result == true) {
+                      _refreshData();
+                    }
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.vertical_align_top,
+                        size: 20,
+                        color: ColorConst.bluePale,
+                      ),
+                      SizedBox(width: 8.0),
+                      Text(
+                        "Kassadan chiqim",
+                        style: TextStyle(
+                          color: ColorConst.bluePale,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
@@ -237,7 +299,9 @@ class _CurrerKassaScreenState extends State<CurrerKassaScreen> {
         final item = history[index];
         final bool isKirim = item.status == 1;
         final bool isLoading = _loadingIds.contains(item.id);
-        final String status = item.type == 'out_full_contaner' ? 'input' : 'output';
+        final String status = item.type == 'out_full_contaner'
+            ? 'input'
+            : 'output';
         final String type = item.type == 'out_full_contaner'
             ? "Maxsulot: ${item.count}"
             : item.type == 'inp_empty_contaner'
@@ -318,9 +382,7 @@ class _CurrerKassaScreenState extends State<CurrerKassaScreen> {
                         ),
                       ),
                       Text(
-                        item.created_at.length >= 10
-                            ? item.created_at.substring(0, 10)
-                            : item.created_at,
+                        item.created_at,
                         style: TextStyle(color: Colors.grey[500], fontSize: 11),
                       ),
                     ],
@@ -330,17 +392,17 @@ class _CurrerKassaScreenState extends State<CurrerKassaScreen> {
                     const SizedBox(height: 12),
                     item.type == 'out_full_contaner'
                         ? _buildActionButton(
-                      label: "Tasdiqlash",
-                      color: Colors.green,
-                      isLoading: isLoading,
-                      onPressed: () => _handleConfirm(item.id),
-                    )
+                            label: "Tasdiqlash",
+                            color: Colors.green,
+                            isLoading: isLoading,
+                            onPressed: () => _handleConfirm(item.id),
+                          )
                         : _buildActionButton(
-                      label: "Bekor qilish",
-                      color: ColorConst.red,
-                      isLoading: isLoading,
-                      onPressed: () => _handleCancel(item.id),
-                    ),
+                            label: "Bekor qilish",
+                            color: ColorConst.red,
+                            isLoading: isLoading,
+                            onPressed: () => _handleCancel(item.id),
+                          ),
                   ],
                 ],
               ),
@@ -362,31 +424,28 @@ class _CurrerKassaScreenState extends State<CurrerKassaScreen> {
       height: 45,
       decoration: BoxDecoration(
         color: isLoading ? color.withOpacity(0.6) : color,
-        border: Border.all(
-          color: ColorConst.border,
-          width: 1.2,
-        ),
+        border: Border.all(color: ColorConst.border, width: 1.2),
         borderRadius: const BorderRadius.all(Radius.circular(12.0)),
       ),
       child: TextButton(
         onPressed: isLoading ? null : onPressed,
         child: isLoading
             ? const SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 2,
-          ),
-        )
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
             : Text(
-          label,
-          style: TextStyle(
-            color: ColorConst.bluePale,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+                label,
+                style: TextStyle(
+                  color: ColorConst.bluePale,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }
