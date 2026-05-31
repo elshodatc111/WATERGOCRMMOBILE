@@ -41,7 +41,7 @@ class _CurrerHistoryScreenState extends State<CurrerHistoryScreen> {
         centerTitle: true,
         elevation: 0,
         title: Text(
-          "Aktiv buyurtmalar",
+          "Yakunlangan buyurtmalar",
           style: TextStyle(
             color: ColorConst.bluePale,
             fontSize: 22.0,
