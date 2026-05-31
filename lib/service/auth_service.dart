@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:water_go/const/api_const.dart';
+import 'package:water_go/models/ish_haqi_model.dart';
 import 'package:water_go/models/user_model.dart';
 import 'package:water_go/service/fcm_service.dart';
 
@@ -125,6 +126,69 @@ class AuthService {
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<List<IshHaqiModel>?> getPayment() async {
+    try {
+      final token = getToken();
+      if (token == null) return null;
+      final response = await http.get(
+        Uri.parse('${ApiConst.baseUrl}/auth/payment'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['payment'] != null) {
+          // Listni xavfsiz Map qilib olish
+          final List list = data['payment'] ?? [];
+          return list.map((e) => IshHaqiModel.fromJson(e)).toList();
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> passwordUpdate(String current_password,String new_password,String new_password_confirmation,) async {
+    try {
+      final token = getToken();
+      if (token == null) {throw AuthException('Avtorizatsiya belgisi topilmadi. Tizimga qayta kiring.');}
+      final response = await http.post(
+        Uri.parse('${ApiConst.baseUrl}/auth/password/update'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'current_password': current_password,
+          'new_password': new_password,
+          'new_password_confirmation': new_password_confirmation,
+        }),
+      ).timeout(const Duration(seconds: 15));
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        if (data['success'] == true) {
+          return;
+        }
+        throw AuthException(data['message'] ?? 'Parolni yangilab bo\'lmadi');
+      } else {
+        throw AuthException(data['message'] ?? 'Server xatoligi: ${response.statusCode}');
+      }
+    } on SocketException {
+      throw AuthException('Internet aloqasi mavjud emas');
+    } on HttpException {
+      throw AuthException('Server bilan ulanishda xatolik yuz berdi');
+    } on FormatException {
+      throw AuthException('Serverdan noto\'g\'ri formatda javob keldi');
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException('Kutilmagan xatolik yuz berdi: $e');
     }
   }
 
