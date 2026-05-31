@@ -97,7 +97,20 @@ class _CurrerHistoryScreenState extends State<CurrerHistoryScreen> {
             if (snapshot.hasData) {
               final orders = snapshot.data!;
               if (orders.isEmpty) {
-                return CurrerActiveEmpryWidget();
+                return Center(
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.hourglass_empty,size: 84,color: ColorConst.border,),
+                        SizedBox(height: 36,),
+                        const Text(
+                          "Yakunlangan buyurtmalar mavjud emas.",
+                          style: TextStyle(color: ColorConst.muted, fontSize: 16),
+                        ),
+                      ]
+                  ),
+                );
               }
               return ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),

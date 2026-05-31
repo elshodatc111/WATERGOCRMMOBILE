@@ -73,6 +73,13 @@ class _CurrerHomeScreenState extends State<CurrerHomeScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: _fetchOrders,
+            icon: const Icon(Icons.refresh),
+          ),
+          SizedBox(width: 8.0,)
+        ],
       ),
       body: _buildBody(),
     );
@@ -96,23 +103,12 @@ class _CurrerHomeScreenState extends State<CurrerHomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Icon(Icons.hourglass_empty,size: 84,color: ColorConst.border,),
+            SizedBox(height: 36,),
             const Text(
               "Yangi buyurtmalar mavjud emas",
               style: TextStyle(color: ColorConst.muted, fontSize: 16),
-            ),
-            SizedBox(height: 20,),
-            Container(
-              width: 200,
-              decoration: BoxDecoration(
-                color: ColorConst.red,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: TextButton(
-                onPressed: () => _initServiceAndFetch(),
-                child: Text("Yangilash",style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 16.0),),
-              ),
-            ),
-          ],
+            ),]
         ),
       );
     }
@@ -182,23 +178,57 @@ class _CurrerHomeScreenState extends State<CurrerHomeScreen> {
                 ],
               ),
               subtitle: Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+                padding: const EdgeInsets.only(top: 1.0),
+                child: Column(
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 16.0,
-                      color: ColorConst.muted,
+                    const Divider(height: 8.0),
+                    SizedBox(height: 8.0,),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 16.0,
+                          color: ColorConst.muted,
+                        ),
+                        SizedBox(width: 2.0),
+                        Text("Manzil:",style: TextStyle(fontWeight: FontWeight.w700),),
+                        SizedBox(width: 2.0),
+                        Expanded(
+                          child: Text(
+                            order.address,
+                            style: const TextStyle(
+                              color: ColorConst.muted,
+                              fontSize: 14.0,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(width: 2.0),
-                    Text(
-                      order.address,
-                      style: const TextStyle(
-                        color: ColorConst.muted,
-                        fontSize: 14.0,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    SizedBox(height: 8.0,),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.phone,
+                          size: 16.0,
+                          color: ColorConst.muted,
+                        ),
+                        SizedBox(width: 2.0),
+                        Text("Telefon:",style: TextStyle(fontWeight: FontWeight.w700),),
+                        SizedBox(width: 2.0),
+                        Expanded(
+                          child: Text(
+                            order.phone,
+                            style: const TextStyle(
+                              color: ColorConst.muted,
+                              fontSize: 14.0,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

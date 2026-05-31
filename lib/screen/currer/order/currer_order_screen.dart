@@ -98,7 +98,23 @@ class _CurrerOrderScreenState extends State<CurrerOrderScreen> {
             if (snapshot.hasData) {
               final orders = snapshot.data!;
               if (orders.isEmpty) {
-                return CurrerActiveEmpryWidget();
+                return Center(
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.hourglass_empty,size: 84,color: ColorConst.border,),
+                        SizedBox(height: 36,),
+                        const Text(
+                          "Aktiv buyurtmalar mavjud emas.",
+                          style: TextStyle(color: ColorConst.muted, fontSize: 16),
+                        ),
+                        SizedBox(height: 8.0,),
+                        Text("Buyurtmalarni asosiy sahifa orqali qo'shing",
+                          style: TextStyle(color: ColorConst.muted, fontSize: 16),)
+                      ]
+                  ),
+                );
               }
               return ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
